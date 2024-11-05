@@ -11,6 +11,7 @@ import (
 
 type QueryValue struct {
 	Emit        bool
+	EmitAsArg   bool
 	EmitPointer bool
 	Name        string
 	DBName      string // The name of the field in the database. Only set if Struct==nil.
@@ -25,6 +26,10 @@ type QueryValue struct {
 
 func (v QueryValue) EmitStruct() bool {
 	return v.Emit
+}
+
+func (v QueryValue) EmitStructAsArg() bool {
+	return v.EmitAsArg
 }
 
 func (v QueryValue) IsStruct() bool {
@@ -248,7 +253,7 @@ func (v QueryValue) VariableForField(f Field) string {
 	if !v.IsStruct() {
 		return v.Name
 	}
-	if !v.EmitStruct() {
+	if !v.EmitStructAsArg() {
 		return toLowerCase(f.Name)
 	}
 	return v.Name + "." + f.Name
