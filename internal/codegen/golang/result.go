@@ -240,6 +240,19 @@ func buildQueries(req *plugin.GenerateRequest, options *opts.Options, structs []
 				Column:    p.Column,
 			}
 		} else if len(query.Params) >= 1 {
+			// overide argument type
+			emit := true
+			methodName := gq.MethodName + "Params"
+			for _, override := range options.Overrides {
+				oride := override.ShimOverride
+				if override.FuncName == query.Name {
+					if oride.GoType.TypeName == "" {
+						continue
+					}
+					emit = false
+					methodName = oride.GoType.TypeName
+				}
+			}
 			var cols []goColumn
 			for _, p := range query.Params {
 				cols = append(cols, goColumn{
@@ -247,12 +260,13 @@ func buildQueries(req *plugin.GenerateRequest, options *opts.Options, structs []
 					Column: p.Column,
 				})
 			}
-			s, err := columnsToStruct(req, options, gq.MethodName+"Params", cols, false)
+			s, err := columnsToStruct(req, options, methodName, cols, false)
 			if err != nil {
 				return nil, err
 			}
 			gq.Arg = QueryValue{
-				Emit:        true,
+				Emit:        emit,
+				EmitAsArg:   true,
 				Name:        "arg",
 				Struct:      s,
 				SQLDriver:   sqlpkg,
@@ -301,6 +315,7 @@ func buildQueries(req *plugin.GenerateRequest, options *opts.Options, structs []
 			}
 
 			if gs == nil {
+				emit = true
 				var columns []goColumn
 				for i, c := range query.Columns {
 					columns = append(columns, goColumn{
@@ -310,7 +325,20 @@ func buildQueries(req *plugin.GenerateRequest, options *opts.Options, structs []
 					})
 				}
 				var err error
-				gs, err = columnsToStruct(req, options, gq.MethodName+"Row", columns, true)
+				// overide return type
+				methodName := gq.MethodName + "Row"
+				for _, override := range options.Overrides {
+					oride := override.ShimOverride
+					if override.FuncName == query.Name {
+						if oride.GoType.TypeName == "" {
+							continue
+						}
+						methodName = oride.GoType.TypeName
+						emit = false
+					}
+				}
+				gs, err = columnsToStruct(req, options, methodName, columns, true)
+
 				if err != nil {
 					return nil, err
 				}

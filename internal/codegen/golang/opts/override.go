@@ -20,6 +20,7 @@ type Override struct {
 	// fully qualified name of the Go type, e.g. `github.com/segmentio/ksuid.KSUID`
 	DBType                  string `json:"db_type" yaml:"db_type"`
 	Deprecated_PostgresType string `json:"postgres_type" yaml:"postgres_type"`
+	FuncName                string `json:"func_name" yaml:"func_name"`
 
 	// for global overrides only when two different engines are in use
 	Engine string `json:"engine,omitempty" yaml:"engine"`
@@ -100,9 +101,13 @@ func (o *Override) parse(req *plugin.GenerateRequest) (err error) {
 	// validate option combinations
 	switch {
 	case o.Column != "" && o.DBType != "":
-		return fmt.Errorf("Override specifying both `column` (%q) and `db_type` (%q) is not valid.", o.Column, o.DBType)
-	case o.Column == "" && o.DBType == "":
-		return fmt.Errorf("Override must specify one of either `column` or `db_type`")
+		return fmt.Errorf("Override specifying both `column` (%q) and `db_type` (%q) is not valid", o.Column, o.DBType)
+	case o.Column != "" && o.FuncName != "":
+		return fmt.Errorf("Override specifying both `column` (%q) and `func_name` (%q) is not valid", o.Column, o.FuncName)
+	case o.DBType != "" && o.FuncName != "":
+		return fmt.Errorf("Override specifying both `db_type` (%q) and `func_name` (%q) is not valid", o.DBType, o.FuncName)
+	case o.Column == "" || o.DBType == "" || o.FuncName == "":
+		return fmt.Errorf("Override must specify one of the following: `column` or `db_type` or `func_name`")
 	}
 
 	// validate Column
