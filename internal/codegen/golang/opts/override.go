@@ -106,8 +106,8 @@ func (o *Override) parse(req *plugin.GenerateRequest) (err error) {
 		return fmt.Errorf("Override specifying both `column` (%q) and `func_name` (%q) is not valid", o.Column, o.FuncName)
 	case o.DBType != "" && o.FuncName != "":
 		return fmt.Errorf("Override specifying both `db_type` (%q) and `func_name` (%q) is not valid", o.DBType, o.FuncName)
-	case o.Column == "" && o.DBType == "" && o.FuncName == "":
-		return fmt.Errorf("Override must specify one of either `column` or `db_type`")
+	case o.Column == "" || o.DBType == "" || o.FuncName == "":
+		return fmt.Errorf("Override must specify one of the following: `column` or `db_type` or `func_name`")
 	}
 
 	// validate Column
